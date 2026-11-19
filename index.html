@@ -1036,7 +1036,22 @@ const sideNotes=['Schreibe eine erste Vermutung in dein Themenheft.','Achte dara
 function showStep(n){stepIdx=Math.max(0,Math.min(4,n));maxStep=Math.max(maxStep,stepIdx);$$('.step').forEach((x,i)=>x.hidden=i!==stepIdx);$$('[data-jump]').forEach((b,i)=>{b.disabled=i>maxStep;b.classList.toggle('selected',i===stepIdx);b.classList.toggle('done',i<maxStep);b.classList.toggle('locked',i>maxStep);b.setAttribute('aria-current',i===stepIdx?'step':'false');});$('progressText').textContent=`${stepIdx+1} von 5 Schritten`;$('progressBar').style.width=((stepIdx+1)*20)+'%';$('sideNote').textContent=sideNotes[stepIdx];window.scrollTo({top:0,behavior:'instant'});}
 function feedback(id,msg,kind='good'){const el=$(id);el.hidden=false;el.textContent=msg;el.className='feedback '+(kind==='good'?'good':'attn');}
 function selected(name){return $$(`input[name="${name}"]:checked`).map(x=>x.value).sort().join('')}
-$('brandHome').onclick=e=>{e.preventDefault();showView('home')};$('navHome').onclick=()=>showView('home');$('navStation').onclick=()=>showView('station');$('navStation2').onclick=()=>{showView('station2');s2Step(s2Idx)};$('startPrologue').onclick=()=>showView('vorwissen');$('backFromPrep').onclick=()=>showView('home');$('finishPrep').onclick=()=>{scene(0);showView('prologue');startPrologueMusic()};$('storyPrev').onclick=()=>scene(sceneIdx-1);$('storyNext').onclick=()=>{if(sceneIdx===3)showView('station');else scene(sceneIdx+1)};$('storySkip').onclick=()=>showView('station');$('backHome').onclick=()=>showView('home');
+$('brandHome').onclick=e=>{e.preventDefault();showView('home')};$('navHome').onclick=()=>showView('home');$('navStation').onclick=()=>showView('station');$('navStation2').onclick=()=>{showView('station2');s2Step(s2Idx)};$('startPrologue').onclick=()=>showView('vorwissen');$('backFromPrep').onclick=()=>showView('home');$('finishPrep').onclick=()=>{scene(0);showView('prologue');startPrologueMusic()};/* V27: Nach jeder Erzählszene am Anfang der nächsten Szene beginnen.
+   Besonders auf schmalen Displays befindet sich die Weiter-Taste unter dem langen Erzähltext. */
+function turnStoryPage(index){
+  scene(index);
+  const storyAside=$('prologueView').querySelector('.storyaside');
+  if(storyAside) storyAside.scrollTop=0;
+  const resetScroll=()=>{
+    if(view!=='prologue')return;
+    if(storyAside) storyAside.scrollTop=0;
+    window.scrollTo({top:0,left:0,behavior:'instant'});
+  };
+  resetScroll();
+  requestAnimationFrame(resetScroll); // Scroll-Verankerung nach dem Szenenwechsel überstimmen
+}
+$('storyPrev').onclick=()=>turnStoryPage(sceneIdx-1);
+$('storyNext').onclick=()=>{if(sceneIdx===3)showView('station');else turnStoryPage(sceneIdx+1)};$('storySkip').onclick=()=>showView('station');$('backHome').onclick=()=>showView('home');
 $$('[data-back]').forEach(b=>b.onclick=()=>showStep(Number(b.dataset.back)));$$('[data-jump]').forEach(b=>b.onclick=()=>showStep(Number(b.dataset.jump)));
 for(let i=0;i<4;i++){$('advance'+i).onclick=()=>showStep(i+1)}
 $('checkA').onclick=()=>{const s=selected('factA');if(!s){feedback('f1','Wähle zunächst eine oder mehrere Aussagen.','attn');return;}feedback('f1',s==='ac'?'Das passt zu Emilys Bericht. Wichtig: Sie kannte nicht alle Einzelheiten aus Pollys Leben. Schreibe jetzt eine offene Frage in dein Themenheft.':'Prüfe noch einmal: Was hatte Emily selbst gesehen oder gehört? Und wo sagt der Bericht, dass sie etwas nicht wusste?',s==='ac'?'good':'attn');};
